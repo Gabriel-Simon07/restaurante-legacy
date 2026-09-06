@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard de Qualidade & Cobertura - Bella Tavola</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: rgba(18, 24, 38, 0.85);
+      --bg-card-hover: rgba(28, 36, 56, 0.95);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #06b6d4;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg-main); color: var(--text-main); line-height: 1.6; padding: 32px 24px; min-height: 100vh; }
+    code { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-color); }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 16px; }
+    .header-title h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, #fff 0%, #cbd5e1 50%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-title p { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; background: var(--primary); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s ease; border: none; cursor: pointer; }
+    .btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
+    .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+    .btn-outline:hover { background: rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.2); }
+    
+    /* Grid de Métricas Principais */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 32px; }
+    .metric-card { background: var(--bg-card); backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; position: relative; overflow: hidden; transition: all 0.2s ease; }
+    .metric-card:hover { transform: translateY(-3px); border-color: rgba(99, 102, 241, 0.3); }
+    .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+    .metric-label { font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); margin-bottom: 8px; }
+    .metric-value { font-size: 2.2rem; font-weight: 800; color: #fff; display: flex; align-items: baseline; gap: 8px; }
+    .metric-sub { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+    
+    /* Grid de Gráficos */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 32px; }
+    .chart-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; backdrop-filter: blur(12px); }
+    .chart-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .chart-container { position: relative; height: 260px; width: 100%; }
+    
+    /* Tabela de Code Smells */
+    .table-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; backdrop-filter: blur(12px); }
+    .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
+    .filter-buttons { display: flex; gap: 8px; }
+    .filter-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-muted); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .filter-btn.active, .filter-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .styled-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    .styled-table th { background: rgba(255,255,255,0.03); padding: 14px 16px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-color); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }
+    .styled-table td { padding: 16px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+    .styled-table tr:hover { background: rgba(255, 255, 255, 0.02); }
+    
+    /* Badges */
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+    .badge-critica { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .badge-alta { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-media { background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-detectado { background: rgba(239, 68, 68, 0.1); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.2); }
+    .badge-resolvido { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-cleancode { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-refactoring { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-gof { background: rgba(14, 165, 233, 0.15); color: #7dd3fc; border: 1px solid rgba(14, 165, 233, 0.3); }
+    
+    .text-muted { color: var(--text-muted); }
+    .text-indigo { color: #818cf8; }
+    .text-emerald { color: #34d399; }
+    footer { text-align: center; margin-top: 48px; color: var(--text-muted); font-size: 0.85rem; border-top: 1px solid var(--border-color); padding-top: 24px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-title">
+        <h1>Laboratório Bella Tavola - Dashboard de Qualidade</h1>
+        <p>Monitoramento de Cobertura de Testes (JaCoCo), Métricas de Complexidade e Catálogo de Code Smells</p>
+      </div>
+      <div class="header-actions">
+        <span class="badge badge-media">Atualizado: 05/09/2026 20:29:40</span>
+        <a href="../target/site/jacoco/index.html" target="_blank" class="btn btn-outline">
+          <span>🔍 Ver JaCoCo Detalhado</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Métricas em Cards -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Cobertura de Linhas (JaCoCo)</div>
+        <div class="metric-value" style="color: #f59e0b;">79,6%</div>
+        <div class="metric-sub">261 de 328 linhas cobertas pelos testes</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Dívidas Técnicas / Smells</div>
+        <div class="metric-value">13 <span style="font-size:1rem;color:#f87171;">catalogados</span></div>
+        <div class="metric-sub">5 Clean Code | 4 Refactoring | 4 GoF</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Tamanho do Projeto</div>
+        <div class="metric-value">705 <span style="font-size:1rem;color:var(--text-muted);">LOC</span></div>
+        <div class="metric-sub">Distribuídas em 5 classes Java na camada principal</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Rede de Segurança</div>
+        <div class="metric-value" style="color: #34d399;">100%</div>
+        <div class="metric-sub">10/10 Testes de Regressão Unitários Passando (JUnit 5)</div>
+      </div>
+    </div>
+
+    <!-- Gráficos Visuais -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3><span>Cobertura de Testes (Instruções)</span> <small class="badge badge-media">JaCoCo</small></h3>
+        <div class="chart-container">
+          <canvas id="chartCoverage"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3><span>Distribuição de Linhas por Classe (LOC)</span> <small class="badge badge-alta">God Class Alert</small></h3>
+        <div class="chart-container">
+          <canvas id="chartLoc"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3><span>Radar de Maturidade da Arquitetura</span></h3>
+        <div class="chart-container">
+          <canvas id="chartRadar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cobertura de Testes por Classe -->
+    <div class="table-card" style="margin-bottom: 24px;">
+      <div class="table-header">
+        <div>
+          <h2>Cobertura de Testes por Classe (JaCoCo)</h2>
+          <p class="text-muted">Percentual detalhado de código coberto pela suíte de testes unitários (JUnit 5)</p>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Classe Java</th>
+              <th>Linhas Cobertas / Totais</th>
+              <th>Progresso</th>
+              <th>Percentual</th>
+            </tr>
+          </thead>
+          <tbody>
+<tr>
+  <td><strong><code>Item.java</code></strong></td>
+  <td>22 / 23 linhas</td>
+  <td style="width: 35%;">
+    <div style="background: rgba(255,255,255,0.08); border-radius: 6px; height: 10px; width: 100%; overflow: hidden;">
+      <div style="background: #10b981; width: 95.7%; height: 100%;"></div>
+    </div>
+  </td>
+  <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #10b981;">95,7%</span></td>
+</tr>
+<tr>
+  <td><strong><code>Garcom.java</code></strong></td>
+  <td>10 / 10 linhas</td>
+  <td style="width: 35%;">
+    <div style="background: rgba(255,255,255,0.08); border-radius: 6px; height: 10px; width: 100%; overflow: hidden;">
+      <div style="background: #10b981; width: 100.0%; height: 100%;"></div>
+    </div>
+  </td>
+  <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #10b981;">100,0%</span></td>
+</tr>
+<tr>
+  <td><strong><code>RestauranteLegado.java</code></strong></td>
+  <td>201 / 258 linhas</td>
+  <td style="width: 35%;">
+    <div style="background: rgba(255,255,255,0.08); border-radius: 6px; height: 10px; width: 100%; overflow: hidden;">
+      <div style="background: #f59e0b; width: 77.9%; height: 100%;"></div>
+    </div>
+  </td>
+  <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #f59e0b;">77,9%</span></td>
+</tr>
+<tr>
+  <td><strong><code>Pedido.java</code></strong></td>
+  <td>28 / 37 linhas</td>
+  <td style="width: 35%;">
+    <div style="background: rgba(255,255,255,0.08); border-radius: 6px; height: 10px; width: 100%; overflow: hidden;">
+      <div style="background: #f59e0b; width: 75.7%; height: 100%;"></div>
+    </div>
+  </td>
+  <td><span class="badge" style="background: rgba(255,255,255,0.05); color: #f59e0b;">75,7%</span></td>
+</tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tabela de Code Smells -->
+    <div class="table-card">
+      <div class="table-header">
+        <div>
+          <h2>Inventário de Code Smells & Dívidas Técnicas</h2>
+          <p class="text-muted">Acompanhe os pontos fracos intencionais do código legado e sua refatoração planejada</p>
+        </div>
+        <div class="filter-buttons">
+          <button class="filter-btn active" onclick="filtrarSmells('TODOS')">Todos (13)</button>
+          <button class="filter-btn" onclick="filtrarSmells('Clean Code')">Clean Code (5)</button>
+          <button class="filter-btn" onclick="filtrarSmells('Refactoring')">Refactoring (4)</button>
+          <button class="filter-btn" onclick="filtrarSmells('Design Patterns (GoF)')">GoF Patterns (4)</button>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Code Smell & Descrição</th>
+              <th>Categoria</th>
+              <th>Localização</th>
+              <th>Severidade</th>
+              <th>Status</th>
+              <th>Refatoração Alvo</th>
+            </tr>
+          </thead>
+          <tbody>
+<tr class="smell-row" data-categoria="Clean Code">
+  <td><strong>Nomes Ruins e Abreviações</strong><br><small class="text-muted">Variáveis e parâmetros com abreviações crípticas que não revelam intenção.</small></td>
+  <td><span class="badge badge-cleancode">Clean Code</span></td>
+  <td><code>RestauranteLegado.java / Pedido.java / Item.java</code><br><small class="text-indigo">r_n, p_st, m1, cli, val_tot_aux, desc_cup</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Renomear identificadores para nomes autoexplicativos (ex: statusPedido, totalComTaxa, nomeCliente).</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Clean Code">
+  <td><strong>Método Monstruoso (Long Method)</strong><br><small class="text-muted">Método gigante acumulando validações, cálculos de taxas, cupons, impressão de cupom e persistência.</small></td>
+  <td><span class="badge badge-cleancode">Clean Code</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">processarTudoEPagar(...) [120+ linhas]</small></td>
+  <td><span class="badge badge-critica">Crítica</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Aplicar Extract Method e decompor em métodos pequenos com responsabilidade única.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Clean Code">
+  <td><strong>Níveis de Abstração Misturados</strong><br><small class="text-muted">Regras matemáticas e contábeis misturadas diretamente com System.out.printf e formatação de texto.</small></td>
+  <td><span class="badge badge-cleancode">Clean Code</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">processarTudoEPagar / imprimirPreviaComanda</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Isolar a camada de apresentação em uma classe dedicada de visualização (ReceiptPrinter / CLI).</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Clean Code">
+  <td><strong>Flag Arguments (Muitos Parâmetros)</strong><br><small class="text-muted">Método recebe flags booleanas (vip, paraViagem) e muitos parâmetros primitivos soltos.</small></td>
+  <td><span class="badge badge-cleancode">Clean Code</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">abrirAtendimento(...) [8 parâmetros]</small></td>
+  <td><span class="badge badge-media">Média</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Introduzir Parameter Object (DadosAberturaAtendimento) ou padrão Builder.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Clean Code">
+  <td><strong>Retorno de Códigos de Erro</strong><br><small class="text-muted">Métodos retornam Strings de erro ('ERRO_MESA_OCUPADA', etc.) ou null em vez de Exceções.</small></td>
+  <td><span class="badge badge-cleancode">Clean Code</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">abrirAtendimento / adicionarItemAoPedido / etc.</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Criar exceções ricas de domínio (MesaOcupadaException, ItemInexistenteException).</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Refactoring">
+  <td><strong>God Class (Large Class)</strong><br><small class="text-muted">Centraliza todas as responsabilidades: mesas, cardápio, estoque, garçons, cozinha, bar e checkout.</small></td>
+  <td><span class="badge badge-refactoring">Refactoring</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">Classe inteira (300+ linhas)</small></td>
+  <td><span class="badge badge-critica">Crítica</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Extract Class: dividir em Mesa, CardapioService, CozinhaService e CaixaService.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Refactoring">
+  <td><strong>Primitive Obsession</strong><br><small class="text-muted">Uso indiscriminado de tipos primitivos para representar conceitos ricos de domínio.</small></td>
+  <td><span class="badge badge-refactoring">Refactoring</span></td>
+  <td><code>Item.java / Pedido.java / RestauranteLegado.java</code><br><small class="text-indigo">preço double, mesa int, status int, formaPagamento int</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Criar Value Objects: Dinheiro, NumeroMesa, StatusPedido.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Refactoring">
+  <td><strong>Feature Envy (Inveja de Recursos)</strong><br><small class="text-muted">A classe RestauranteLegado acessa getters de Pedido e Item para calcular totais e descontos.</small></td>
+  <td><span class="badge badge-refactoring">Refactoring</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">processarTudoEPagar e calcularSubtotal</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Move Method: mover os cálculos para dentro da entidade Pedido que detém os dados.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Refactoring">
+  <td><strong>Duplicated Code (Código Duplicado)</strong><br><small class="text-muted">Cálculo de cupom promocional e taxa de 10% duplicado em dois métodos diferentes.</small></td>
+  <td><span class="badge badge-refactoring">Refactoring</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">imprimirPreviaComanda e processarTudoEPagar</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Centralizar regras de tributos e descontos em um único serviço de faturamento.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Design Patterns (GoF)">
+  <td><strong>Strategy Smell (Switch-case de Pagamento)</strong><br><small class="text-muted">Estrutura condicional rígida para Dinheiro, Cartão e PIX dificultando novos métodos.</small></td>
+  <td><span class="badge badge-gof">GoF Patterns</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">processarTudoEPagar [if (formaPagamento == 1) ...]</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Implementar Strategy Pattern com interface FormaPagamentoStrategy (Dinheiro, Cartao, Pix).</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Design Patterns (GoF)">
+  <td><strong>Observer Smell (Acoplamento Síncrono)</strong><br><small class="text-muted">Cozinha conhece o Garçom concretamente e o chama diretamente ao finalizar prato.</small></td>
+  <td><span class="badge badge-gof">GoF Patterns</span></td>
+  <td><code>RestauranteLegado.java / Garcom.java</code><br><small class="text-indigo">enviarCozinhaEPreparar / avisarPratoPronto</small></td>
+  <td><span class="badge badge-media">Média</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Implementar Observer Pattern: Cozinha publica evento 'PedidoProntoEvent' para ouvintes inscritos.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Design Patterns (GoF)">
+  <td><strong>Template Method Smell (Passos Duplicados)</strong><br><small class="text-muted">Fluxos de preparo de comida e bebida seguem passos idênticos com pequenas variações manuais.</small></td>
+  <td><span class="badge badge-gof">GoF Patterns</span></td>
+  <td><code>RestauranteLegado.java</code><br><small class="text-indigo">enviarCozinhaEPreparar vs enviarBarEPreparar</small></td>
+  <td><span class="badge badge-media">Média</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Implementar Template Method com classe abstrata PreparoItemTemplate.</small></td>
+</tr>
+<tr class="smell-row" data-categoria="Design Patterns (GoF)">
+  <td><strong>State Smell (Flags e Inteiros de Status)</strong><br><small class="text-muted">Transições de estado do pedido controladas por flags booleanas e ifs espalhados.</small></td>
+  <td><span class="badge badge-gof">GoF Patterns</span></td>
+  <td><code>Pedido.java / RestauranteLegado.java</code><br><small class="text-indigo">int p_st, boolean cancelado, boolean pago</small></td>
+  <td><span class="badge badge-alta">Alta</span></td>
+  <td><span class="badge badge-detectado">DETECTADO (LEGADO)</span></td>
+  <td><small class="text-emerald">Implementar State Pattern com estados formais (AbertoState, EmPreparoState, ProntoState, etc.).</small></td>
+</tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <p>Projeto de Estudo Restaurante Bella Tavola &bull; Laboratório de Refatoração &bull; Gerado automaticamente via Maven</p>
+    </footer>
+  </div>
+
+  <script>
+    // Gráfico de Cobertura JaCoCo (Donut)
+    const ctxCoverage = document.getElementById('chartCoverage').getContext('2d');
+    new Chart(ctxCoverage, {
+      type: 'doughnut',
+      data: {
+        labels: ['Linhas Cobertas', 'Linhas Não Cobertas'],
+        datasets: [{
+          data: [261, 67],
+          backgroundColor: ['#10b981', '#ef4444'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+        }
+      }
+    });
+
+    // Gráfico de Distribuição LOC por Classe (Bar)
+    const ctxLoc = document.getElementById('chartLoc').getContext('2d');
+    new Chart(ctxLoc, {
+      type: 'bar',
+      data: {
+        labels: ["Garcom", "Item", "Main", "Pedido", "RestauranteLegado"],
+        datasets: [{
+          label: 'Linhas de Código (LOC)',
+          data: [25, 52, 98, 76, 454],
+          backgroundColor: '#6366f1',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+          x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+
+    // Radar Chart de Maturidade
+    const ctxRadar = document.getElementById('chartRadar').getContext('2d');
+    new Chart(ctxRadar, {
+      type: 'radar',
+      data: {
+        labels: ['Rede de Testes', 'Clean Code', 'Modularidade (SOLID)', 'Padrões GoF', 'Desacoplamento'],
+        datasets: [{
+          label: 'Estado Atual (Legado)',
+          data: [95, 25, 20, 15, 20],
+          fill: true,
+          backgroundColor: 'rgba(239, 68, 68, 0.2)',
+          borderColor: '#ef4444',
+          pointBackgroundColor: '#ef4444'
+        }, {
+          label: 'Meta Pós-Refatoração',
+          data: [100, 95, 90, 90, 95],
+          fill: true,
+          backgroundColor: 'rgba(16, 185, 129, 0.2)',
+          borderColor: '#10b981',
+          pointBackgroundColor: '#10b981'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          r: {
+            angleLines: { color: 'rgba(255,255,255,0.08)' },
+            grid: { color: 'rgba(255,255,255,0.08)' },
+            pointLabels: { color: '#94a3b8', font: { size: 11 } },
+            ticks: { display: false, max: 100, min: 0 }
+          }
+        },
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8' } }
+        }
+      }
+    });
+
+    // Filtro interativo de Code Smells
+    function filtrarSmells(categoria) {
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      const linhas = document.querySelectorAll('.smell-row');
+      linhas.forEach(linha => {
+        if (categoria === 'TODOS' || linha.getAttribute('data-categoria') === categoria) {
+          linha.style.display = '';
+        } else {
+          linha.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

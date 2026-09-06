@@ -1,0 +1,147 @@
+{
+  "smells": [
+    {
+      "id": "nomes-ruins",
+      "nome": "Nomes Ruins e Abreviações",
+      "categoria": "Clean Code",
+      "arquivo": "RestauranteLegado.java / Pedido.java / Item.java",
+      "local": "r_n, p_st, m1, cli, val_tot_aux, desc_cup",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Variáveis e parâmetros com abreviações crípticas que não revelam intenção.",
+      "refatoracaoSugerida": "Renomear identificadores para nomes autoexplicativos (ex: statusPedido, totalComTaxa, nomeCliente)."
+    },
+    {
+      "id": "long-method",
+      "nome": "Método Monstruoso (Long Method)",
+      "categoria": "Clean Code",
+      "arquivo": "RestauranteLegado.java",
+      "local": "processarTudoEPagar(...) [120+ linhas]",
+      "severidade": "Crítica",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Método gigante acumulando validações, cálculos de taxas, cupons, impressão de cupom e persistência.",
+      "refatoracaoSugerida": "Aplicar Extract Method e decompor em métodos pequenos com responsabilidade única."
+    },
+    {
+      "id": "niveis-abstracao",
+      "nome": "Níveis de Abstração Misturados",
+      "categoria": "Clean Code",
+      "arquivo": "RestauranteLegado.java",
+      "local": "processarTudoEPagar / imprimirPreviaComanda",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Regras matemáticas e contábeis misturadas diretamente com System.out.printf e formatação de texto.",
+      "refatoracaoSugerida": "Isolar a camada de apresentação em uma classe dedicada de visualização (ReceiptPrinter / CLI)."
+    },
+    {
+      "id": "flag-arguments",
+      "nome": "Flag Arguments (Muitos Parâmetros)",
+      "categoria": "Clean Code",
+      "arquivo": "RestauranteLegado.java",
+      "local": "abrirAtendimento(...) [8 parâmetros]",
+      "severidade": "Média",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Método recebe flags booleanas (vip, paraViagem) e muitos parâmetros primitivos soltos.",
+      "refatoracaoSugerida": "Introduzir Parameter Object (DadosAberturaAtendimento) ou padrão Builder."
+    },
+    {
+      "id": "codigos-erro",
+      "nome": "Retorno de Códigos de Erro",
+      "categoria": "Clean Code",
+      "arquivo": "RestauranteLegado.java",
+      "local": "abrirAtendimento / adicionarItemAoPedido / etc.",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Métodos retornam Strings de erro ('ERRO_MESA_OCUPADA', etc.) ou null em vez de Exceções.",
+      "refatoracaoSugerida": "Criar exceções ricas de domínio (MesaOcupadaException, ItemInexistenteException)."
+    },
+    {
+      "id": "god-class",
+      "nome": "God Class (Large Class)",
+      "categoria": "Refactoring",
+      "arquivo": "RestauranteLegado.java",
+      "local": "Classe inteira (300+ linhas)",
+      "severidade": "Crítica",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Centraliza todas as responsabilidades: mesas, cardápio, estoque, garçons, cozinha, bar e checkout.",
+      "refatoracaoSugerida": "Extract Class: dividir em Mesa, CardapioService, CozinhaService e CaixaService."
+    },
+    {
+      "id": "primitive-obsession",
+      "nome": "Primitive Obsession",
+      "categoria": "Refactoring",
+      "arquivo": "Item.java / Pedido.java / RestauranteLegado.java",
+      "local": "preço double, mesa int, status int, formaPagamento int",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Uso indiscriminado de tipos primitivos para representar conceitos ricos de domínio.",
+      "refatoracaoSugerida": "Criar Value Objects: Dinheiro, NumeroMesa, StatusPedido."
+    },
+    {
+      "id": "feature-envy",
+      "nome": "Feature Envy (Inveja de Recursos)",
+      "categoria": "Refactoring",
+      "arquivo": "RestauranteLegado.java",
+      "local": "processarTudoEPagar e calcularSubtotal",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "A classe RestauranteLegado acessa getters de Pedido e Item para calcular totais e descontos.",
+      "refatoracaoSugerida": "Move Method: mover os cálculos para dentro da entidade Pedido que detém os dados."
+    },
+    {
+      "id": "duplicated-code",
+      "nome": "Duplicated Code (Código Duplicado)",
+      "categoria": "Refactoring",
+      "arquivo": "RestauranteLegado.java",
+      "local": "imprimirPreviaComanda e processarTudoEPagar",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Cálculo de cupom promocional e taxa de 10% duplicado em dois métodos diferentes.",
+      "refatoracaoSugerida": "Centralizar regras de tributos e descontos em um único serviço de faturamento."
+    },
+    {
+      "id": "strategy-smell",
+      "nome": "Strategy Smell (Switch-case de Pagamento)",
+      "categoria": "Design Patterns (GoF)",
+      "arquivo": "RestauranteLegado.java",
+      "local": "processarTudoEPagar [if (formaPagamento == 1) ...]",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Estrutura condicional rígida para Dinheiro, Cartão e PIX dificultando novos métodos.",
+      "refatoracaoSugerida": "Implementar Strategy Pattern com interface FormaPagamentoStrategy (Dinheiro, Cartao, Pix)."
+    },
+    {
+      "id": "observer-smell",
+      "nome": "Observer Smell (Acoplamento Síncrono)",
+      "categoria": "Design Patterns (GoF)",
+      "arquivo": "RestauranteLegado.java / Garcom.java",
+      "local": "enviarCozinhaEPreparar / avisarPratoPronto",
+      "severidade": "Média",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Cozinha conhece o Garçom concretamente e o chama diretamente ao finalizar prato.",
+      "refatoracaoSugerida": "Implementar Observer Pattern: Cozinha publica evento 'PedidoProntoEvent' para ouvintes inscritos."
+    },
+    {
+      "id": "template-method-smell",
+      "nome": "Template Method Smell (Passos Duplicados)",
+      "categoria": "Design Patterns (GoF)",
+      "arquivo": "RestauranteLegado.java",
+      "local": "enviarCozinhaEPreparar vs enviarBarEPreparar",
+      "severidade": "Média",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Fluxos de preparo de comida e bebida seguem passos idênticos com pequenas variações manuais.",
+      "refatoracaoSugerida": "Implementar Template Method com classe abstrata PreparoItemTemplate."
+    },
+    {
+      "id": "state-smell",
+      "nome": "State Smell (Flags e Inteiros de Status)",
+      "categoria": "Design Patterns (GoF)",
+      "arquivo": "Pedido.java / RestauranteLegado.java",
+      "local": "int p_st, boolean cancelado, boolean pago",
+      "severidade": "Alta",
+      "status": "DETECTADO (LEGADO)",
+      "descricao": "Transições de estado do pedido controladas por flags booleanas e ifs espalhados.",
+      "refatoracaoSugerida": "Implementar State Pattern com estados formais (AbertoState, EmPreparoState, ProntoState, etc.)."
+    }
+  ]
+}
