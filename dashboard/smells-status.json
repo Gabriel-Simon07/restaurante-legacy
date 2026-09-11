@@ -7,7 +7,7 @@
       "arquivo": "RestauranteLegado.java / Pedido.java / Item.java",
       "local": "r_n, p_st, m1, cli, val_tot_aux, desc_cup",
       "severidade": "Alta",
-      "status": "DETECTADO (LEGADO)",
+      "status": "REFATORADO",
       "descricao": "Variáveis e parâmetros com abreviações crípticas que não revelam intenção.",
       "refatoracaoSugerida": "Renomear identificadores para nomes autoexplicativos (ex: statusPedido, totalComTaxa, nomeCliente)."
     },
@@ -18,7 +18,7 @@
       "arquivo": "RestauranteLegado.java",
       "local": "processarTudoEPagar(...) [120+ linhas]",
       "severidade": "Crítica",
-      "status": "DETECTADO (LEGADO)",
+      "status": "REFATORADO",
       "descricao": "Método gigante acumulando validações, cálculos de taxas, cupons, impressão de cupom e persistência.",
       "refatoracaoSugerida": "Aplicar Extract Method e decompor em métodos pequenos com responsabilidade única."
     },

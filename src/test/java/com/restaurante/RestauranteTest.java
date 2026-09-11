@@ -26,7 +26,7 @@ public class RestauranteTest {
     @Test
     @DisplayName("RF01 - Deve inicializar restaurante com mesas livres e cardapio carregado")
     void testInicializacaoRestaurante() {
-        assertEquals("Bella Tavola", restaurante.r_n);
+        assertEquals("Bella Tavola", restaurante.nomeRestaurante);
         assertEquals(5, restaurante.totalMesas);
         assertFalse(restaurante.isMesaOcupada(1));
         assertFalse(restaurante.isMesaOcupada(5));
@@ -70,7 +70,7 @@ public class RestauranteTest {
         Pedido p = restaurante.getPedido(2);
         assertNotNull(p);
         assertEquals(3, p.getItens().size());
-        assertEquals("Sem queijo extra", p.getItens().get(0).getObs());
+        assertEquals("Sem queijo extra", p.getItens().get(0).getObservacao());
         assertEquals(103.5, restaurante.calcularSubtotal(2), 0.001);
 
         // Item inexistente

@@ -11,19 +11,19 @@ import java.util.*;
 public class RestauranteLegado {
 
     // Nomes ruins e abreviações
-    public String r_n; // nome do restaurante
+    public String nomeRestaurante; // nome do restaurante
     public int totalMesas;
-    public Map<Integer, Boolean> m_status; // mesa ocupada ou nao
+    public Map<Integer, Boolean> statusMesaOcupada; // mesa ocupada ou nao
     public Map<Integer, Pedido> pedidosPorMesa;
     public List<Item> cardapio;
     public List<Garcom> garcons;
     public List<String> cuponsValidos;
 
     // Construtor
-    public RestauranteLegado(String r_n, int totalMesas) {
-        this.r_n = r_n;
+    public RestauranteLegado(String nomeRestaurante, int totalMesas) {
+        this.nomeRestaurante = nomeRestaurante;
         this.totalMesas = totalMesas;
-        this.m_status = new HashMap<>();
+        this.statusMesaOcupada = new HashMap<>();
         this.pedidosPorMesa = new HashMap<>();
         this.cardapio = new ArrayList<>();
         this.garcons = new ArrayList<>();
@@ -31,7 +31,7 @@ public class RestauranteLegado {
 
         // Inicializa todas as mesas como livres
         for (int i = 1; i <= totalMesas; i++) {
-            m_status.put(i, false);
+            statusMesaOcupada.put(i, false);
         }
 
         // Carrega cardápio padrão inicial
@@ -78,7 +78,7 @@ public class RestauranteLegado {
         }
 
         // Verifica se mesa ta ocupada (comentário ruim/óbvio)
-        if (Boolean.TRUE.equals(m_status.get(mesa))) {
+        if (Boolean.TRUE.equals(statusMesaOcupada.get(mesa))) {
             return "ERRO_MESA_OCUPADA";
         }
 
@@ -88,20 +88,19 @@ public class RestauranteLegado {
         }
 
         // Ocupa a mesa
-        m_status.put(mesa, true);
+        statusMesaOcupada.put(mesa, true);
         int novoIdPedido = pedidosPorMesa.size() + 1;
         Pedido novoPedido = new Pedido(novoIdPedido, mesa, cliente, vip, paraViagem, obs, g);
         pedidosPorMesa.put(mesa, novoPedido);
 
-        System.out.println("[RESTAURANTE " + r_n + "]: Mesa " + mesa + " aberta para " + cliente + " com garcom " + g.getNome());
+        System.out.println("[RESTAURANTE " + nomeRestaurante + "]: Mesa " + mesa + " aberta para " + cliente + " com garcom " + g.getNome());
         return "OK";
     }
 
     // RF03: Adicionar itens ao pedido
     public String adicionarItemAoPedido(int mesa, int itemId, int qtd, String observacaoItem) {
-        if (!pedidosPorMesa.containsKey(mesa)) {
-            return "ERRO_MESA_SEM_PEDIDO";
-        }
+        String ERRO_MESA_SEM_PEDIDO = procuraMesa(mesa);
+        if (ERRO_MESA_SEM_PEDIDO != null) return ERRO_MESA_SEM_PEDIDO;
 
         Item modelo = buscarItemCardapioPorId(itemId);
         if (modelo == null) {
@@ -158,9 +157,9 @@ public class RestauranteLegado {
                 // Passo 1: Validar ingredientes
                 System.out.println("[COZINHA] 1. Checando ingredientes para: " + it.getNome());
                 // Passo 2: Preparar
-                System.out.println("[COZINHA] 2. Cozinhando " + it.getNome() + " (Tempo est: " + it.getTempPrep() + " min)");
-                if (it.getObs() != null && !it.getObs().isEmpty()) {
-                    System.out.println("[COZINHA]    -> Atendendo observacao especial: " + it.getObs());
+                System.out.println("[COZINHA] 2. Cozinhando " + it.getNome() + " (Tempo est: " + it.getTempoPreparo() + " min)");
+                if (it.getObservacao() != null && !it.getObservacao().isEmpty()) {
+                    System.out.println("[COZINHA]    -> Atendendo observacao especial: " + it.getObservacao());
                 }
                 // Passo 3: Empratar
                 System.out.println("[COZINHA] 3. Empratando e finalizando: " + it.getNome());
@@ -193,9 +192,9 @@ public class RestauranteLegado {
                 // Passo 1: Validar insumos (duplicação da estrutura da cozinha)
                 System.out.println("[BAR] 1. Checando insumos e gelo para: " + it.getNome());
                 // Passo 2: Preparar / Servir
-                System.out.println("[BAR] 2. Tirando bebida " + it.getNome() + " (Tempo est: " + it.getTempPrep() + " min)");
-                if (it.getObs() != null && !it.getObs().isEmpty()) {
-                    System.out.println("[BAR]    -> Observacao: " + it.getObs());
+                System.out.println("[BAR] 2. Tirando bebida " + it.getNome() + " (Tempo est: " + it.getTempoPreparo() + " min)");
+                if (it.getObservacao() != null && !it.getObservacao().isEmpty()) {
+                    System.out.println("[BAR]    -> Observacao: " + it.getObservacao());
                 }
                 // Passo 3: Envasar / Decorar taça
                 System.out.println("[BAR] 3. Envasando taça/copo: " + it.getNome());
@@ -299,64 +298,30 @@ public class RestauranteLegado {
     // RF06: Fechamento de Conta e Checkout
     public String processarTudoEPagar(int mesa, int formaPagamento, double valorEntregueDinheiro, String cupom, boolean aceitaTaxaServico, int numeroPessoasDivisao) {
         // Validação da mesa e pedido
-        if (!pedidosPorMesa.containsKey(mesa)) {
-            return "ERRO_MESA_SEM_PEDIDO";
-        }
+        String ERRO_MESA_SEM_PEDIDO = procuraMesa(mesa);
+        if (ERRO_MESA_SEM_PEDIDO != null) return ERRO_MESA_SEM_PEDIDO;
 
         Pedido p = pedidosPorMesa.get(mesa);
-        if (p.isPago()) {
-            return "ERRO_PEDIDO_JA_PAGO";
-        }
-        if (p.isCancelado()) {
-            return "ERRO_PEDIDO_CANCELADO";
-        }
+        String ERRO_PEDIDO_JA_PAGO = statusPedido(p);
+        if (ERRO_PEDIDO_JA_PAGO != null) return ERRO_PEDIDO_JA_PAGO;
 
         // Inveja de Recursos (Feature Envy): RestauranteLegado acessa cada detalhe interno de Pedido e Item
-        double val_tot_aux = 0.0;
-        List<Item> itensDoPedido = p.getItens();
-        for (int i = 0; i < itensDoPedido.size(); i++) {
-            Item itemAtual = itensDoPedido.get(i);
-            val_tot_aux += itemAtual.getPreco(); // Acumula preco
-        }
-
-        if (val_tot_aux <= 0) {
-            return "ERRO_PEDIDO_VAZIO";
-        }
+        Double val_tot_aux = somaValorTotal(p);
+        if (val_tot_aux == null) return "ERRO_PEDIDO_VAZIO";
 
         // Lógica duplicada de cupom
-        double desc_cup = 0.0;
-        if (cupom != null && !cupom.trim().isEmpty()) {
-            String cupomUpper = cupom.trim().toUpperCase();
-            if (cuponsValidos.contains(cupomUpper)) {
-                if ("DESC10".equals(cupomUpper)) {
-                    desc_cup = val_tot_aux * 0.10;
-                } else if ("PROMO5".equals(cupomUpper)) {
-                    desc_cup = 5.0;
-                } else if ("BELLA20".equals(cupomUpper)) {
-                    desc_cup = val_tot_aux * 0.20;
-                }
-            } else {
-                System.out.println("[AVISO]: Cupom invalido ignorado: " + cupom);
-            }
-        }
+        double desc_cup = aplicaCupomDesconto(cupom, val_tot_aux);
 
         // Desconto adicional para cliente VIP (Feature Envy)
-        if (p.isVip()) {
-            desc_cup += (val_tot_aux * 0.05);
-        }
+        desc_cup = isVip(p, desc_cup, val_tot_aux);
 
         // Evita desconto maior que o valor
-        if (desc_cup > val_tot_aux) {
-            desc_cup = val_tot_aux;
-        }
+        desc_cup = verificaDescontoMaiorQueValor(desc_cup, val_tot_aux);
 
         double valorComDesconto = val_tot_aux - desc_cup;
 
         // Cálculo da taxa de serviço (10%)
-        double taxaServico = 0.0;
-        if (aceitaTaxaServico) {
-            taxaServico = valorComDesconto * 0.10;
-        }
+        double taxaServico = calculaTaxaServico(aceitaTaxaServico, valorComDesconto);
 
         double totalFinal = valorComDesconto + taxaServico;
 
@@ -387,14 +352,27 @@ public class RestauranteLegado {
         }
 
         // Rateio / Divisão da conta
-        if (numeroPessoasDivisao <= 0) {
-            numeroPessoasDivisao = 1;
-        }
+        numeroPessoasDivisao = calculaNumeroPessoasDivisaoValor(numeroPessoasDivisao);
         double valorPorPessoa = totalAposFormaPagamento / numeroPessoasDivisao;
 
         // Mistura de Nível de Abstração: Impressão direta do cupom fiscal / comprovante no terminal
+        cupomFiscal(mesa, formaPagamento, valorEntregueDinheiro, aceitaTaxaServico, numeroPessoasDivisao, p, val_tot_aux, desc_cup, taxaServico, totalFinal, descForma, totalAposFormaPagamento, troco, valorPorPessoa);
+
+        // Atualização de estado e limpeza (liberação da mesa para próximo cliente)
+        finalizaPedido(mesa, p);
+
+        return "OK";
+    }
+
+    private void finalizaPedido(int mesa, Pedido p) {
+        p.setStatus(Pedido.STATUS_PAGO);
+        p.setPago(true);
+        statusMesaOcupada.put(mesa, false); // Libera mesa (comentário óbvio)
+    }
+
+    private void cupomFiscal(int mesa, int formaPagamento, double valorEntregueDinheiro, boolean aceitaTaxaServico, int numeroPessoasDivisao, Pedido p, Double val_tot_aux, double desc_cup, double taxaServico, double totalFinal, String descForma, double totalAposFormaPagamento, double troco, double valorPorPessoa) {
         System.out.println("\n========================================================");
-        System.out.println("            RESTAURANTE " + r_n.toUpperCase());
+        System.out.println("            RESTAURANTE " + nomeRestaurante.toUpperCase());
         System.out.println("               CUPOM FISCAL / COMPROVANTE               ");
         System.out.println("========================================================");
         System.out.println("Mesa: " + mesa + " | Atendente: " + (p.getGarcom() != null ? p.getGarcom().getNome() : "Sem Garçom"));
@@ -433,15 +411,87 @@ public class RestauranteLegado {
             System.out.printf("Divisao da Conta (%d pessoas):           R$ %8.2f cada\n", numeroPessoasDivisao, valorPorPessoa);
         }
         System.out.println("========================================================");
-        System.out.println("    Obrigado pela preferencia! Volte sempre ao " + r_n + "!");
+        System.out.println("    Obrigado pela preferencia! Volte sempre ao " + nomeRestaurante + "!");
         System.out.println("========================================================\n");
+    }
 
-        // Atualização de estado e limpeza (liberação da mesa para próximo cliente)
-        p.setStatus(Pedido.STATUS_PAGO);
-        p.setPago(true);
-        m_status.put(mesa, false); // Libera mesa (comentário óbvio)
+    private static int calculaNumeroPessoasDivisaoValor(int numeroPessoasDivisao) {
+        if (numeroPessoasDivisao <= 0) {
+            numeroPessoasDivisao = 1;
+        }
+        return numeroPessoasDivisao;
+    }
 
-        return "OK";
+    private static double calculaTaxaServico(boolean aceitaTaxaServico, double valorComDesconto) {
+        double taxaServico = 0.0;
+        if (aceitaTaxaServico) {
+            taxaServico = valorComDesconto * 0.10;
+        }
+        return taxaServico;
+    }
+
+    private static double verificaDescontoMaiorQueValor(double desc_cup, Double val_tot_aux) {
+        if (desc_cup > val_tot_aux) {
+            desc_cup = val_tot_aux;
+        }
+        return desc_cup;
+    }
+
+    private static double isVip(Pedido p, double desc_cup, Double val_tot_aux) {
+        if (p.isVip()) {
+            desc_cup += (val_tot_aux * 0.05);
+        }
+        return desc_cup;
+    }
+
+    private double aplicaCupomDesconto(String cupom, Double val_tot_aux) {
+        double desc_cup = 0.0;
+        if (cupom != null && !cupom.trim().isEmpty()) {
+            String cupomUpper = cupom.trim().toUpperCase();
+            if (cuponsValidos.contains(cupomUpper)) {
+                if ("DESC10".equals(cupomUpper)) {
+                    desc_cup = val_tot_aux * 0.10;
+                } else if ("PROMO5".equals(cupomUpper)) {
+                    desc_cup = 5.0;
+                } else if ("BELLA20".equals(cupomUpper)) {
+                    desc_cup = val_tot_aux * 0.20;
+                }
+            } else {
+                System.out.println("[AVISO]: Cupom invalido ignorado: " + cupom);
+            }
+        }
+        return desc_cup;
+    }
+
+    private static Double somaValorTotal(Pedido p) {
+        double val_tot_aux = 0.0;
+        List<Item> itensDoPedido = p.getItens();
+        for (int i = 0; i < itensDoPedido.size(); i++) {
+            Item itemAtual = itensDoPedido.get(i);
+            val_tot_aux += itemAtual.getPreco(); // Acumula preco
+        }
+
+        if (val_tot_aux <= 0) {
+            return null;
+        }
+        return val_tot_aux;
+    }
+
+    private static String statusPedido(Pedido p) {
+        if (p.isPago()) {
+            return "ERRO_PEDIDO_JA_PAGO";
+        }
+        if (p.isCancelado()) {
+            return "ERRO_PEDIDO_CANCELADO";
+        }
+        return null;
+    }
+
+    private String procuraMesa(int mesa) {
+        if (!pedidosPorMesa.containsKey(mesa)) {
+            return "ERRO_MESA_SEM_PEDIDO";
+        }
+        return null;
     }
 
     public Pedido getPedido(int mesa) {
@@ -449,6 +499,6 @@ public class RestauranteLegado {
     }
 
     public boolean isMesaOcupada(int mesa) {
-        return Boolean.TRUE.equals(m_status.get(mesa));
+        return Boolean.TRUE.equals(statusMesaOcupada.get(mesa));
     }
 }

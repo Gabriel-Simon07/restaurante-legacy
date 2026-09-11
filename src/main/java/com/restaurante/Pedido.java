@@ -18,9 +18,9 @@ public class Pedido {
     public static final int STATUS_PAGO = 5;
 
     public int id;
-    public int m1; // numero da mesa (nome ruim)
-    public String cli; // nome do cliente (nome ruim)
-    public int p_st; // status do pedido (nome ruim)
+    public int numeroMesa; // numero da mesa (nome ruim)
+    public String nomeCliente; // nome do cliente (nome ruim)
+    public int statusPedido; // status do pedido (nome ruim)
     public boolean cancelado;
     public boolean pago;
     public boolean vip;
@@ -29,15 +29,15 @@ public class Pedido {
     public List<Item> itens;
     public String obsGeral;
 
-    public Pedido(int id, int m1, String cli, boolean vip, boolean paraViagem, String obsGeral, Garcom garcom) {
+    public Pedido(int id, int numeroMesa, String nomeCliente, boolean vip, boolean paraViagem, String obsGeral, Garcom garcom) {
         this.id = id;
-        this.m1 = m1;
-        this.cli = cli;
+        this.numeroMesa = numeroMesa;
+        this.nomeCliente = nomeCliente;
         this.vip = vip;
         this.paraViagem = paraViagem;
         this.obsGeral = obsGeral;
         this.garcom = garcom;
-        this.p_st = STATUS_RECEBIDO;
+        this.statusPedido = STATUS_RECEBIDO;
         this.cancelado = false;
         this.pago = false;
         this.itens = new ArrayList<>();
@@ -48,10 +48,10 @@ public class Pedido {
     }
 
     public int getId() { return id; }
-    public int getMesa() { return m1; }
-    public String getCliente() { return cli; }
-    public int getStatus() { return p_st; }
-    public void setStatus(int st) { this.p_st = st; }
+    public int getMesa() { return numeroMesa; }
+    public String getCliente() { return nomeCliente; }
+    public int getStatus() { return statusPedido; }
+    public void setStatus(int st) { this.statusPedido = st; }
     public boolean isCancelado() { return cancelado; }
     public void setCancelado(boolean cancelado) { this.cancelado = cancelado; }
     public boolean isPago() { return pago; }
@@ -64,7 +64,7 @@ public class Pedido {
 
     public String getDescricaoStatus() {
         if (cancelado) return "CANCELADO";
-        switch (p_st) {
+        switch (statusPedido) {
             case STATUS_RECEBIDO: return "RECEBIDO";
             case STATUS_EM_PREPARO: return "EM_PREPARO";
             case STATUS_PRONTO: return "PRONTO";
