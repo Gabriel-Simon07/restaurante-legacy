@@ -1,5 +1,5 @@
 # 🍝 Restaurante "Bella Tavola" — Laboratório de Refatoração & Clean Code
-
+ 
 > Sistema executável de gestão de pedidos de restaurante, deliberadamente implementado com **dívidas técnicas, "code smells" e alto acoplamento**, servindo como **laboratório prático de estudos** para aplicar conceitos de **Clean Code**, **Refactoring** e **Design Patterns (GoF)** sem medo de quebrar o negócio.
 
 ---
